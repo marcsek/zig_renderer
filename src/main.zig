@@ -1,24 +1,18 @@
 const std = @import("std");
+const minifb = @cImport(@cInclude("MiniFB.h"));
+const minifb_e = @cImport(@cInclude("MiniFB_enums.h"));
+
+extern fn malloc(size: usize) ?[*]u8;
 
 pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+    const mfb_window = minifb.mfb_open_ex("my display", 800, 600, minifb_e.WF_RESIZABLE);
 
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
+    const buffer: [*]u32 = @alignCast(@ptrCast(malloc(800 * 600 * 4) orelse return));
+    for (0..(800 * 600)) |c| {
+        buffer[c] = minifb.MFB_RGB(249, 135, 135);
+    }
 
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
-
-    try bw.flush(); // don't forget to flush!
-}
-
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
+    while (minifb.mfb_wait_sync(mfb_window)) {
+        _ = minifb.mfb_update_ex(mfb_window, buffer, 800, 600);
+    }
 }
