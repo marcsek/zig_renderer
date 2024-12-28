@@ -1,18 +1,25 @@
 const std = @import("std");
-const minifb = @cImport(@cInclude("MiniFB.h"));
-const minifb_e = @cImport(@cInclude("MiniFB_enums.h"));
+const Window = @import("window.zig").Window;
+const WinFrame = @import("window.zig").WinFrame;
+const Renderer = @import("renderer.zig").Renderer;
 
-extern fn malloc(size: usize) ?[*]u8;
+const WINDOW_WIDTH = 800;
+const WINDOW_HEIGHT = 600;
 
 pub fn main() !void {
-    const mfb_window = minifb.mfb_open_ex("my display", 800, 600, minifb_e.WF_RESIZABLE);
+    const window = try Window.init("Fuckery", WINDOW_WIDTH, WINDOW_HEIGHT, WinFrame.resizable);
+    const renderer = try Renderer.init(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    const buffer: [*]u32 = @alignCast(@ptrCast(malloc(800 * 600 * 4) orelse return));
-    for (0..(800 * 600)) |c| {
-        buffer[c] = minifb.MFB_RGB(249, 135, 135);
+    window.setTargetFps(60);
+
+    var x: u32 = 0;
+    while (window.sync()) {
+        renderer.resetBuffer();
+        renderer.putPixel(x, 300, 0xFFFFFFFF);
+
+        _ = window.update(renderer.renderBuffer, WINDOW_WIDTH, WINDOW_HEIGHT);
+        x += 1;
     }
 
-    while (minifb.mfb_wait_sync(mfb_window)) {
-        _ = minifb.mfb_update_ex(mfb_window, buffer, 800, 600);
-    }
+    renderer.destroy();
 }
