@@ -5,21 +5,40 @@ const Renderer = @import("renderer.zig").Renderer;
 
 const WINDOW_WIDTH = 800;
 const WINDOW_HEIGHT = 600;
+const TARGET_FPS = 144;
+
+var x: f64 = 0;
 
 pub fn main() !void {
-    const window = try Window.init("Fuckery", WINDOW_WIDTH, WINDOW_HEIGHT, WinFrame.resizable);
-    const renderer = try Renderer.init(WINDOW_WIDTH, WINDOW_HEIGHT);
+    var window = try Window.init("fuckery", WINDOW_WIDTH, WINDOW_HEIGHT, WinFrame.resizable);
+    var renderer = try Renderer.init(WINDOW_WIDTH, WINDOW_HEIGHT);
+    defer renderer.destroy();
 
-    window.setTargetFps(60);
+    window.setTargetFps(TARGET_FPS);
 
-    var x: u32 = 0;
-    while (window.sync()) {
+    var dt: f64 = 0;
+    var state: i32 = 0;
+    while (true) : (dt = try window.sync()) {
         renderer.resetBuffer();
-        renderer.putPixel(x, 300, 0xFFFFFFFF);
 
-        _ = window.update(renderer.renderBuffer, WINDOW_WIDTH, WINDOW_HEIGHT);
-        x += 1;
+        tick(dt);
+        render(&renderer);
+
+        state = window.update(renderer.render_buffer, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        if (state < 0) break;
+
+        std.debug.print("\x1B[2J\x1B[H", .{});
+        window.debugInfo(std.debug);
     }
+}
 
-    renderer.destroy();
+fn tick(dt: f64) void {
+    x = x + 0.2 * dt;
+}
+
+fn render(renderer: *Renderer) void {
+    const x_pos: u32 = @max(@min(@as(i32, @intFromFloat(x)), WINDOW_WIDTH - 50), 0);
+
+    renderer.putSquare(x_pos, 300, x_pos + 50, 350, 0xFFFFFFFF);
 }

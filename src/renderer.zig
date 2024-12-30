@@ -8,21 +8,20 @@ const allocator = std.heap.c_allocator;
 pub const Renderer = struct {
     width: u32,
     height: u32,
-    renderBuffer: []u32,
+    render_buffer: []u32,
 
     pub fn init(width: u32, height: u32) !Renderer {
-        const bufferSize: usize = width * height * @sizeOf(u32);
-        const buf: []u32 = try allocator.alloc(u32, bufferSize);
+        const buffer_size: usize = width * height * @sizeOf(u32);
+        const buf: []u32 = try allocator.alloc(u32, buffer_size);
 
         for (0..(width * height)) |c| {
             buf[c] = DEFAULT_COLOR;
-            // buf[c] = minifb.MFB_RGB(249, 135, 135);
         }
 
         return Renderer{
             .width = width,
             .height = height,
-            .renderBuffer = buf,
+            .render_buffer = buf,
         };
     }
 
@@ -30,16 +29,24 @@ pub const Renderer = struct {
         assert(x >= 0 and x < self.width);
         assert(y >= 0 and y < self.height);
 
-        self.renderBuffer[y * self.width + x] = c;
+        self.render_buffer[y * self.width + x] = c;
+    }
+
+    pub fn putSquare(self: Renderer, x1: u32, y1: u32, x2: u32, y2: u32, c: u32) void {
+        for (y1..y2) |y| {
+            for (x1..x2) |x| {
+                self.putPixel(@intCast(x), @intCast(y), c);
+            }
+        }
     }
 
     pub fn resetBuffer(self: Renderer) void {
         for (0..(self.width * self.height)) |c| {
-            self.renderBuffer[c] = DEFAULT_COLOR;
+            self.render_buffer[c] = DEFAULT_COLOR;
         }
     }
 
     pub fn destroy(self: Renderer) void {
-        allocator.free(self.renderBuffer);
+        allocator.free(self.render_buffer);
     }
 };
