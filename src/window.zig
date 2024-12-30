@@ -1,5 +1,5 @@
-const time = @import("std").time;
 const std = @import("std");
+const time = @import("std").time;
 const minifb = @cImport(@cInclude("MiniFB.h"));
 const minifb_e = @cImport(@cInclude("MiniFB_enums.h"));
 
@@ -19,17 +19,15 @@ pub const Window = struct {
         minifb.mfb_set_target_fps(0);
         const mfb_window = minifb.mfb_open_ex(@ptrCast(title), width, height, @intFromEnum(flags)) orelse return error.FailedToOpen;
 
-        return Window{ .mfb_window = mfb_window, .metrics = .{} };
+        return Window{ .mfb_window = mfb_window, .metrics = .{ .timer = try time.Timer.start() } };
     }
 
     pub fn sync(self: *Window) !f64 {
-        var timer = self.metrics.timer orelse try time.Timer.start();
-        const target_frame_time = 1000.0 / @as(f64, @floatFromInt(self.metrics.target_fps));
-        const max_elapsed: f64 = if (self.metrics.target_fps == 0) 0 else target_frame_time;
+        const max_elapsed: f64 = if (self.metrics.target_fps != 0) 1000.0 / @as(f64, @floatFromInt(self.metrics.target_fps)) else 0;
 
         var delta: f64, var dt: f64, var fps: f64 = .{ 0, 0, 0 };
         while (true) {
-            delta = @floatFromInt(timer.lap());
+            delta = @floatFromInt(self.metrics.timer.lap());
             dt = delta / 1_000_000.0;
             fps = 1000.0 / dt;
 
@@ -37,7 +35,7 @@ pub const Window = struct {
             if (max_elapsed < self.metrics.total_elapsed) {
                 self.metrics.last_frame_time = self.metrics.total_elapsed;
                 self.metrics.total_elapsed = 0;
-                timer.reset();
+                self.metrics.timer.reset();
                 return self.metrics.last_frame_time;
             }
             time.sleep(100_000);
@@ -61,7 +59,7 @@ pub const Window = struct {
 };
 
 const TimeMetrics = struct {
-    timer: ?time.Timer = null,
+    timer: time.Timer,
     total_elapsed: f64 = 0,
     target_fps: u32 = 60,
     last_frame_time: f64 = 0,
