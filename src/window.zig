@@ -3,6 +3,9 @@ const time = @import("std").time;
 const minifb = @cImport(@cInclude("MiniFB.h"));
 const minifb_e = @cImport(@cInclude("MiniFB_enums.h"));
 
+// nanoseconds
+const SLEEP_DURATION = 50_000;
+
 pub const WinFrame = enum(u16) {
     resizable = 1,
     fullscreen = 2,
@@ -27,6 +30,8 @@ pub const Window = struct {
 
         var delta: f64, var dt: f64, var fps: f64 = .{ 0, 0, 0 };
         while (true) {
+            defer time.sleep(SLEEP_DURATION);
+
             delta = @floatFromInt(self.metrics.timer.lap());
             dt = delta / 1_000_000.0;
             fps = 1000.0 / dt;
@@ -38,7 +43,6 @@ pub const Window = struct {
                 self.metrics.timer.reset();
                 return self.metrics.last_frame_time;
             }
-            time.sleep(100_000);
         }
 
         return 0;
@@ -52,9 +56,9 @@ pub const Window = struct {
         self.metrics.target_fps = fps;
     }
 
-    pub fn debugInfo(self: Window, writer: anytype) void {
-        writer.print("frame time: {d:0.3}\n", .{self.metrics.last_frame_time});
-        writer.print("fps: {d:0.0}\n", .{1000.0 / self.metrics.last_frame_time});
+    pub fn debugInfo(self: Window, writer: std.io.AnyWriter) !void {
+        try writer.print("frame time: {d:0.3}\n", .{self.metrics.last_frame_time});
+        try writer.print("fps: {d:0.0}\n", .{1000.0 / self.metrics.last_frame_time});
     }
 };
 

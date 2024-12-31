@@ -1,27 +1,25 @@
 const std = @import("std");
+const Allocator = @import("std").mem.Allocator;
 const minifb = @cImport(@cInclude("MiniFB.h"));
 const assert = std.debug.assert;
 
 const DEFAULT_COLOR: comptime_int = 0xFFF98787;
-const allocator = std.heap.c_allocator;
 
 pub const Renderer = struct {
     width: u32,
     height: u32,
     render_buffer: []u32,
+    allocator: Allocator,
 
-    pub fn init(width: u32, height: u32) !Renderer {
+    pub fn init(allocator: Allocator, width: u32, height: u32) !Renderer {
         const buffer_size: usize = width * height * @sizeOf(u32);
         const buf: []u32 = try allocator.alloc(u32, buffer_size);
-
-        for (0..(width * height)) |c| {
-            buf[c] = DEFAULT_COLOR;
-        }
 
         return Renderer{
             .width = width,
             .height = height,
             .render_buffer = buf,
+            .allocator = allocator,
         };
     }
 
@@ -47,6 +45,6 @@ pub const Renderer = struct {
     }
 
     pub fn destroy(self: Renderer) void {
-        allocator.free(self.render_buffer);
+        self.allocator.free(self.render_buffer);
     }
 };

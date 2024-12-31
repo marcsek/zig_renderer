@@ -1,4 +1,5 @@
 const std = @import("std");
+const std_out = @import("std").io.getStdOut();
 const Window = @import("window.zig").Window;
 const WinFrame = @import("window.zig").WinFrame;
 const Renderer = @import("renderer.zig").Renderer;
@@ -11,7 +12,7 @@ var x: f64 = 0;
 
 pub fn main() !void {
     var window = try Window.init("fuckery", WINDOW_WIDTH, WINDOW_HEIGHT, WinFrame.resizable);
-    var renderer = try Renderer.init(WINDOW_WIDTH, WINDOW_HEIGHT);
+    var renderer = try Renderer.init(std.heap.c_allocator, WINDOW_WIDTH, WINDOW_HEIGHT);
     defer renderer.destroy();
 
     window.setTargetFps(TARGET_FPS);
@@ -28,8 +29,8 @@ pub fn main() !void {
 
         if (state < 0) break;
 
-        std.debug.print("\x1B[2J\x1B[H", .{});
-        window.debugInfo(std.debug);
+        try std_out.writer().print("\x1B[2J\x1B[H", .{});
+        try window.debugInfo(std_out.writer().any());
     }
 }
 
@@ -41,4 +42,9 @@ fn render(renderer: *Renderer) void {
     const x_pos: u32 = @max(@min(@as(i32, @intFromFloat(x)), WINDOW_WIDTH - 50), 0);
 
     renderer.putSquare(x_pos, 300, x_pos + 50, 350, 0xFFFFFFFF);
+}
+
+test "detect memory leak" {
+    var renderer = try Renderer.init(std.testing.allocator, WINDOW_WIDTH, WINDOW_HEIGHT);
+    defer renderer.destroy();
 }
