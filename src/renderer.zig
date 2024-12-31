@@ -30,10 +30,30 @@ pub const Renderer = struct {
         self.render_buffer[y * self.width + x] = c;
     }
 
-    pub fn putSquare(self: Renderer, x1: u32, y1: u32, x2: u32, y2: u32, c: u32) void {
-        for (y1..y2) |y| {
-            for (x1..x2) |x| {
-                self.putPixel(@intCast(x), @intCast(y), c);
+    pub fn create_line(self: Renderer, x0: u32, y0: u32, x1: u32, y1: u32, c: u32) void {
+        const dx: i32 = @intCast(if (x1 >= x0) x1 - x0 else x0 - x1);
+        const sx: i32 = if (x0 < x1) 1 else -1;
+
+        const dy: i32 = -@as(i32, @intCast(if (y1 >= y0) y1 - y0 else y0 - y1));
+        const sy: i32 = if (y0 < y1) 1 else -1;
+
+        var err: i32 = dx + dy;
+        var e2: i32 = 0;
+
+        var x: i32 = @intCast(x0);
+        var y: i32 = @intCast(y0);
+
+        while (true) {
+            self.putPixel(@intCast(x), @intCast(y), c);
+            if (x == x1 and y == y1) break;
+            e2 = 2 * err;
+            if (e2 >= dy) {
+                err += dy;
+                x += sx;
+            }
+            if (e2 <= dx) {
+                err += dx;
+                y += sy;
             }
         }
     }

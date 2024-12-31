@@ -6,9 +6,11 @@ const Renderer = @import("renderer.zig").Renderer;
 
 const WINDOW_WIDTH = 800;
 const WINDOW_HEIGHT = 600;
-const TARGET_FPS = 144;
+const TARGET_FPS = 0;
 
-var x: f64 = 0;
+var c_x: f64 = 0;
+var c_y: f64 = 0;
+var theta: f64 = 0;
 
 pub fn main() !void {
     var window = try Window.init("fuckery", WINDOW_WIDTH, WINDOW_HEIGHT, WinFrame.resizable);
@@ -35,13 +37,16 @@ pub fn main() !void {
 }
 
 fn tick(dt: f64) void {
-    x = x + 0.2 * dt;
+    theta += dt / 1000;
+    c_x = 400 + 150 * @cos(theta);
+    c_y = 300 + 150 * @sin(theta);
 }
 
 fn render(renderer: *Renderer) void {
-    const x_pos: u32 = @max(@min(@as(i32, @intFromFloat(x)), WINDOW_WIDTH - 50), 0);
+    const c_x_pos: u32 = @intFromFloat(c_x);
+    const c_y_pos: u32 = @intFromFloat(c_y);
 
-    renderer.putSquare(x_pos, 300, x_pos + 50, 350, 0xFFFFFFFF);
+    renderer.create_line(400, 300, c_x_pos, c_y_pos, 0xFFFFFFFF);
 }
 
 test "detect memory leak" {
