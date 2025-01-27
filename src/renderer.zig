@@ -24,13 +24,14 @@ pub const Renderer = struct {
     }
 
     pub fn putPixel(self: Renderer, x: u32, y: u32, c: u32) void {
-        assert(x >= 0 and x < self.width);
-        assert(y >= 0 and y < self.height);
+        //assert(x >= 0 and x < self.width);
+        //assert(y >= 0 and y < self.height);
+        if (x < 0 or x >= self.width or y < 0 or y >= self.height) return;
 
         self.render_buffer[y * self.width + x] = c;
     }
 
-    pub fn create_line(self: Renderer, x0: u32, y0: u32, x1: u32, y1: u32, c: u32) void {
+    pub fn createLine(self: Renderer, x0: u32, y0: u32, x1: u32, y1: u32, c: u32) void {
         const dx: i32 = @intCast(if (x1 >= x0) x1 - x0 else x0 - x1);
         const sx: i32 = if (x0 < x1) 1 else -1;
 
